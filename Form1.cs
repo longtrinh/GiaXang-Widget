@@ -21,7 +21,7 @@ namespace PetrolimexWidget
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
-        // --- NEW: Windows API to forcefully flush unused RAM to disk ---
+        // --- Windows API to forcefully flush unused RAM to disk ---
         [System.Runtime.InteropServices.DllImport("psapi.dll")]
         static extern int EmptyWorkingSet(IntPtr hwProc);
 
@@ -182,7 +182,7 @@ namespace PetrolimexWidget
                             }
                         }
 
-                        // --- FIX 2: Flush the grid completely before rebinding to prevent ghost rows/columns ---
+                        // --- Flush the grid completely before rebinding to prevent ghost rows/columns ---
                         dgvPrices.DataSource = null;
                         dgvPrices.Columns.Clear();
                         dgvPrices.Rows.Clear();
@@ -266,6 +266,7 @@ namespace PetrolimexWidget
         {
             Properties.Settings.Default.WidgetLocation = this.Location;
             Properties.Settings.Default.Save();
+            RemoveFromStartup();
             Application.Exit();
         }
 
@@ -322,7 +323,28 @@ namespace PetrolimexWidget
                 trayIcon.Visible = true;
             }
         }
+        private void RemoveFromStartup()
+        {
+            try
+            {
+                string appName = "PetrolimexWidget";
 
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true))
+                {
+                    if (key != null)
+                    {
+                        if (key.GetValue(appName) != null)
+                        {
+                            key.DeleteValue(appName, false);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Could not remove startup: " + ex.Message);
+            }
+        }
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             if (trayIcon != null)
