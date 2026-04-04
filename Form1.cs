@@ -265,6 +265,7 @@ namespace PetrolimexWidget
         private void CloseWidget_DoubleClick(object sender, EventArgs e)
         {
             Properties.Settings.Default.WidgetLocation = this.Location;
+            Properties.Settings.Default.ShowTrayIcon = true;
             Properties.Settings.Default.Save();
             RemoveFromStartup();
             Application.Exit();
@@ -299,7 +300,7 @@ namespace PetrolimexWidget
         {
             trayMenu = new ContextMenuStrip();
 
-            ToolStripMenuItem hideOption = new ToolStripMenuItem("Hide taskbar tray icon");
+            ToolStripMenuItem hideOption = new ToolStripMenuItem("Ẩn biểu tượng khay hệ thống");
             hideOption.Click += (s, e) =>
             {
                 trayIcon.Visible = false;
@@ -309,7 +310,7 @@ namespace PetrolimexWidget
             trayMenu.Items.Add(hideOption);
             trayMenu.Items.Add(new ToolStripSeparator());
 
-            ToolStripMenuItem closeOption = new ToolStripMenuItem("Close widget");
+            ToolStripMenuItem closeOption = new ToolStripMenuItem("Đóng widget");
             closeOption.Click += CloseWidget_DoubleClick;
             trayMenu.Items.Add(closeOption);
 
