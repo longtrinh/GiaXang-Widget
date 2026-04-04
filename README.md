@@ -1,6 +1,7 @@
 # ⛽ Widget Giá Xăng Dầu Petrolimex
 
 Một ứng dụng widget nhỏ gọn trên Desktop dành cho hệ điều hành Windows, giúp bạn theo dõi giá bán lẻ xăng dầu trực tiếp từ trang chủ Petrolimex một cách trực quan, nhanh chóng và không làm phiền đến không gian làm việc.
+<center><img width="404" height="283" alt="image" src="https://github.com/user-attachments/assets/4b04b3df-7217-42ec-a465-08dfe60272e8" /></center>
 
 ## 🌟 Chức năng nổi bật
 
