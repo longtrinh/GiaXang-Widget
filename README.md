@@ -29,9 +29,12 @@ Một ứng dụng widget nhỏ gọn trên Desktop dành cho hệ điều hành
 ### 2. Các thao tác điều khiển Widget
 * **Di chuyển:** Nhấn giữ chuột trái vào dòng tiêu đề, sau đó kéo để di chuyển Widget đến vị trí bạn muốn và lưu lại vị trí này cho lần khởi động sau.
 * **Tương tác qua khay hệ thống (Góc dưới bên phải Taskbar):**
+    * Nháy đúp chuột trái vào bảng giá để đóng widget  
     * Click chuột phải vào biểu tượng của Widget.
-    * Chọn **"Hide taskbar tray icon"** nếu bạn muốn ẩn hẳn biểu tượng này đi cho gọn mắt (ứng dụng vẫn sẽ chạy ngầm và hiển thị trên màn hình).
-    * Chọn **"Close widget"** để tắt ứng dụng.
+    * Chọn **"Ẩn biểu tượng khay hệ thống"** nếu bạn muốn ẩn hẳn biểu tượng này đi cho gọn mắt (ứng dụng vẫn sẽ chạy ngầm và hiển thị trên màn hình).
+    * Chọn **"Đóng widget"** để tắt ứng dụng.
+* Khi bạn chủ động đóng widget (bằng cách nháy đúp chuột trái vào bảng giá, hoặc chuột phải phải biểu tượng khay hệ thống, chọn "Đóng widget") thì widget sẽ không khởi động cùng Windows nữa
+* Lần tới nếu bạn muốn tiếp tục dùng thì chỉ cần mở lại file .exe
 
 ## 🛠 Hướng dẫn cho Lập trình viên (Build từ Source Code)
 
