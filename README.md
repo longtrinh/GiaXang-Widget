@@ -14,7 +14,7 @@ Một ứng dụng widget nhỏ gọn trên Desktop dành cho hệ điều hành
 ## 💻 Yêu cầu hệ thống
 
 * **Hệ điều hành:** Windows 10 hoặc Windows 11 (64-bit).
-* **Kết nối Internet:** Bắt buộc để tải cấu hình và giá trực tuyến.
+* **Kết nối Internet:** Bắt buộc để tải về bảng giá.
 
 ## 🚀 Hướng dẫn cài đặt và sử dụng
 
