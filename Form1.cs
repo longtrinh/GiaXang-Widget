@@ -402,5 +402,16 @@ namespace PetrolimexWidget
 
             base.OnFormClosed(e);
         }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                // Add the WS_EX_TOOLWINDOW extended window style (0x80)
+                cp.ExStyle |= 0x80;
+                return cp;
+            }
+        }
     }
 }
