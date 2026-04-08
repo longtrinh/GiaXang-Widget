@@ -37,10 +37,14 @@ namespace PetrolimexWidget
 
         // The invisible Edge browser engine
         private WebView2 webView;
+        private System.Windows.Forms.Timer scheduleTimer;
+        private DateTime lastScheduledUpdate = DateTime.MinValue;
 
         public Form1()
         {
             InitializeComponent();
+
+            timerRefresh.Start();
 
             SetupSystemTray();
 
@@ -69,6 +73,9 @@ namespace PetrolimexWidget
             // Push to the back immediately after starting
             this.Shown += (s, e) => SetWindowPos(this.Handle, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
+            // --- Start the schedule checker ---
+            SetupScheduleTimer();
+
             // Initial browser load
             InitializeBrowser();
 
@@ -80,6 +87,44 @@ namespace PetrolimexWidget
                     InitializeBrowser();
                 }
             };
+        }
+        private void SetupScheduleTimer()
+        {
+            scheduleTimer = new System.Windows.Forms.Timer();
+            scheduleTimer.Interval = 30000; // Check the time every 30 seconds
+            scheduleTimer.Tick += ScheduleTimer_Tick;
+            scheduleTimer.Start();
+        }
+
+        private void ScheduleTimer_Tick(object sender, EventArgs e)
+        {
+            DateTime now = DateTime.Now;
+
+            // Check if current time matches target times
+            bool isTargetTime = (now.Hour == 0 && now.Minute == 1) ||
+                                (now.Hour == 15 && now.Minute == 1) ||
+                                (now.Hour == 15 && now.Minute == 31);
+
+            // If it's a target time AND we haven't already updated in the last 60 seconds
+            if (isTargetTime && (now - lastScheduledUpdate).TotalMinutes >= 1)
+            {
+                lastScheduledUpdate = now;
+
+                // Ensure the previous browser instance was cleaned up before starting a new one
+                if (webView == null)
+                {
+                    InitializeBrowser();
+                }
+                else
+                {
+                    // Force cleanup if it's stuck from a previous failed load
+                    this.Controls.Remove(webView);
+                    webView.Dispose();
+                    webView = null;
+
+                    InitializeBrowser();
+                }
+            }
         }
 
         protected override void OnActivated(EventArgs e)
@@ -127,7 +172,8 @@ namespace PetrolimexWidget
             webView.CoreWebView2.NavigationCompleted += WebView_NavigationCompleted;
 
             lblTitle.Text = "Connecting to Petrolimex...";
-            webView.Source = new Uri("https://www.petrolimex.com.vn/");
+            // Append a timestamp to the URL to force a fresh fetch and bypass the cache
+            webView.Source = new Uri($"https://www.petrolimex.com.vn/?nocache={DateTime.Now.Ticks}");
         }
 
         private async void WebView_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
