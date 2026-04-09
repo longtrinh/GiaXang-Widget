@@ -142,6 +142,8 @@ namespace PetrolimexWidget
 
             await webView.EnsureCoreWebView2Async(null);
 
+            await webView.CoreWebView2.Profile.ClearBrowsingDataAsync();
+
             // Block YouTube subframe process entirely
             webView.CoreWebView2.FrameCreated += (sender, args) =>
             {
