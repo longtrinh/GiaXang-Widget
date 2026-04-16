@@ -65,9 +65,10 @@ namespace PetrolimexWidget
             dgvPrices.SelectionChanged += (s, e) => dgvPrices.ClearSelection();
 
             this.MouseDown += Form1_MouseDown;
-            lblTitle.MouseDown += Form1_MouseDown;
+            lblTitle.MouseDown += LblTitle_MouseDown;
+
+            // Event subscriptions
             this.DoubleClick += CloseWidget_DoubleClick;
-            lblTitle.DoubleClick += CloseWidget_DoubleClick;
             dgvPrices.DoubleClick += CloseWidget_DoubleClick;
 
             // Push to the back immediately after starting
@@ -88,6 +89,40 @@ namespace PetrolimexWidget
                 }
             };
         }
+
+        private void LblTitle_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                if (e.Clicks == 2)
+                {
+                    // Double-click: trigger force update instead of dragging
+                    ForceUpdate_DoubleClick(sender, e);
+                }
+                else
+                {
+                    // Single click: drag the window as before
+                    ReleaseCapture();
+                    SendMessage(Handle, WM_NCLBUTTONDOWN, (IntPtr)HT_CAPTION, IntPtr.Zero);
+                }
+            }
+        }
+
+        // --- New Method: Force Update when Double Clicking Title ---
+        private void ForceUpdate_DoubleClick(object sender, EventArgs e)
+        {
+            lblTitle.Text = "Manual update requested...";
+
+            if (webView != null)
+            {
+                this.Controls.Remove(webView);
+                webView.Dispose();
+                webView = null;
+            }
+
+            InitializeBrowser();
+        }
+
         private void SetupScheduleTimer()
         {
             scheduleTimer = new System.Windows.Forms.Timer();
@@ -186,32 +221,46 @@ namespace PetrolimexWidget
                 {
                     lblTitle.Text = "Extracting live prices...";
 
-                    // --- FIX 1: Updated JS using a Set to prevent duplicates from hidden mobile tables ---
                     string js = @"
-                        (function() {
-                            let results = [];
-                            let seenProducts = new Set();
-                            let rows = document.querySelectorAll('tr');
-                            rows.forEach(row => {
-                                let cells = row.querySelectorAll('td, th');
-                                if(cells.length >= 3) {
-                                    let product = cells[0].innerText.trim();
-                                    let v1 = cells[1].innerText.trim();
-                                    let v2 = cells[2].innerText.trim();
-                                    
-                                    // Only add if it's a fuel product AND we haven't seen it yet
-                                    if((product.includes('RON') || product.includes('DO') || product.includes('E5') || product.includes('Dầu')) && !seenProducts.has(product)) {
-                                         seenProducts.add(product);
-                                         results.push(product + '|' + v1 + '|' + v2);
-                                    }
-                                }
-                            });
-                            return results.join('^');
-                        })();
-                    ";
+                (function() {
+                    let results = [];
+                    let seenProducts = new Set();
+                    let rows = document.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        let cells = row.querySelectorAll('td, th');
+                        if(cells.length >= 3) {
+                            let product = cells[0].innerText.trim();
+                            let v1 = cells[1].innerText.trim();
+                            let v2 = cells[2].innerText.trim();
+                            
+                            // Only add if it's a fuel product AND we haven't seen it yet
+                            if((product.includes('RON') || product.includes('DO') || product.includes('E5') || product.includes('Dầu')) && !seenProducts.has(product)) {
+                                 seenProducts.add(product);
+                                 results.push(product + '|' + v1 + '|' + v2);
+                            }
+                        }
+                    });
+                    return results.join('^');
+                })();
+            ";
 
-                    string rawResult = await webView.CoreWebView2.ExecuteScriptAsync(js);
-                    rawResult = rawResult.Trim('"');
+                    string rawResult = "";
+
+                    // --- FIX: Smart Wait / Retry Loop ---
+                    // Wait up to 8 seconds for Petrolimex's dynamic price table to render via AJAX.
+                    for (int i = 0; i < 8; i++)
+                    {
+                        await Task.Delay(1000); // Wait 1 second before checking
+
+                        rawResult = await webView.CoreWebView2.ExecuteScriptAsync(js);
+                        rawResult = rawResult?.Trim('"');
+
+                        // If we successfully found data, break out of the waiting loop immediately
+                        if (!string.IsNullOrEmpty(rawResult) && rawResult != "null")
+                        {
+                            break;
+                        }
+                    }
 
                     if (!string.IsNullOrEmpty(rawResult) && rawResult != "null")
                     {
@@ -230,12 +279,10 @@ namespace PetrolimexWidget
                             }
                         }
 
-                        // --- Flush the grid completely before rebinding to prevent ghost rows/columns ---
                         dgvPrices.DataSource = null;
                         dgvPrices.Columns.Clear();
                         dgvPrices.Rows.Clear();
 
-                        // Rebind the clean data
                         dgvPrices.DataSource = dt;
                         dgvPrices.RowHeadersVisible = false;
                         dgvPrices.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
@@ -414,6 +461,25 @@ namespace PetrolimexWidget
                 cp.ExStyle |= 0x80;
                 return cp;
             }
+        }
+
+        private const int WM_NCLBUTTONDBLCLK = 0x00A3;
+
+        protected override void WndProc(ref Message m)
+        {
+            // Intercept the OS-level double-click on the "draggable" area
+            if (m.Msg == WM_NCLBUTTONDBLCLK && m.WParam.ToInt32() == HT_CAPTION)
+            {
+                // Trigger the manual update
+                ForceUpdate_DoubleClick(this, EventArgs.Empty);
+
+                // Consume the message by setting Result to zero so Windows doesn't 
+                // try to maximize or restore the borderless form
+                m.Result = IntPtr.Zero;
+                return;
+            }
+
+            base.WndProc(ref m);
         }
     }
 }
